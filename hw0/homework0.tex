@@ -56,9 +56,15 @@
 
 \usepackage{xcolor}
 \newcount\Comments  % 0 suppresses notes to selves in text
-\Comments = 1
+\Comments = 0
 \newcommand{\kibitz}[2]{\ifnum\Comments=1{\color{#1}{#2}}\fi}
 \newcommand{\dcp}[1]{\kibitz{blue}{[DCP: #1]}}
+
+% Gwen's useful commands (consider adding to a .sty file?)
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
 
 \begin{document}
 
@@ -96,6 +102,120 @@ In this class we will be exploring the question of ``how do we model the trend i
     
 \end{problem}
 
+\newpage
+\question{1}{Modeling Linear Trends - Linear Algebra Review}
+
+1.1 Here is a system of linear equations determining the coefficients $w_0, w_1$ of the line passing through the points in our dataset $\mathcal{D}$:
+\begin{align}
+    y_1 = w_0 + w_1x_1 \\
+    y_2 = w_0 + w_1x_2    
+\end{align}
+
+Solving this system we get:
+\begin{align*}
+    y_1 - y_2 &= w_1(x_1-x_2)&\quad \text{(1)-(2)} \\
+    \Rightarrow w_1 &= \frac{y_1-y_2}{x_1-x_2} \\
+    y_1 &= w_0 + \frac{y_1-y_2}{x_1-x_2}x_1&\quad \text{sub into (1)} \\
+    \Rightarrow w_0 &= y_1 - \frac{y_1x_1-y_2x_1}{x_1-x_2} = \frac{y_1x_1-y_1x_2 - y_1x_1-y_2x_1}{x_1-x_2} = \frac{y_1x_2 + y_2x_1}{x_2-x_1} 
+    % y_1 + y_2 &= 2w_0 + w_1(x_1+x_2)&\quad \text{(1)+(2)} \\
+    % \Rightarrow w_0 &= \frac{y_1 + y_2 - w_1(x_1+x_2)}{2} = \frac{1}{2}(y_1 + y_2 - w_1(x_1+x_2))
+\end{align*}
+
+\medskip
+1.2 In matrix notation, we can write the system of linear equations as $\mathbf{y} = \mathbf{X}\mathbf{w}$ as 
+% \begin{equation*}
+%     \mathbf{y} = \begin{bmatrix}
+%         y_1 \\
+%         y_2
+%     \end{bmatrix}
+% \end{equation*}
+
+% \begin{equation*}
+%     \mathbf{X} = \begin{bmatrix}
+%         1 & x_1\\
+%         1 & x_2
+%     \end{bmatrix}
+% \end{equation*}
+
+% \begin{equation*}
+%     \mathbf{w} = \begin{bmatrix}
+%         w_0 \\
+%         w_1
+%     \end{bmatrix}
+% \end{equation*}
+
+$$\begin{bmatrix}  y_1 \\ y_2 \end{bmatrix} =
+\begin{bmatrix} 1 & x_1\\ 1 & x_2 \end{bmatrix} \begin{bmatrix} w_0 \\ w_1 \end{bmatrix}$$
+
+This works because when we carry out the matrix multiplication, we recover the two separate linear equations. For example, the first step gives us exactly that the first element of the resulting vector $\mathbf{y}$ will be $1w_0+x_1w_1 = w_0 + w_1x_1$, as desired.
+
+\medskip
+
+1.3 A unique solution for $\mathbf{w}$ only exists when the inverse of $\mathbf{X}$ exists. The inverse of a matrix only exists when it has full rank (no linear dependencies), so our 2-point dataset must not have $x_1=x_2$. We also can't have any `missing' data points: we must have $(x,y)$ pairs, no singlets.
+
+We write an analytical expression for the coefficients as such:
+
+\begin{align*}
+    \mathbf{w} &= \mathbf{X}^{-1} \mathbf{y}
+\end{align*}
+
+\medskip
+
+1.4 We solve for $\mathbf{w}$ by hand, which requires computing the inverse of $\mathbf{X}$.
+
+We calculate $\mathbf{X}^{-1}$ as follows:
+\begin{align*}
+    \begin{bmatrix}[cc|cc] 
+    1 & x_1 & 1 & 0\\ 
+    1 & x_2 & 0 & 1
+    \end{bmatrix} &= 
+    \begin{bmatrix}[cc|cc] 
+    1 & x_1 & 1 & 0\\ 
+    0 & x_2 - x_1 & -1 & 1
+    \end{bmatrix} \quad \text{subtract: (2) $\leftarrow$ (2)-(1)}\\
+    &= \begin{bmatrix}[cc|cc] 
+    1 & x_1 & 1 & 0\\ 
+    0 & 1 & -\frac{1}{x_2 - x_1} & \frac{1}{x_2 - x_1}
+    \end{bmatrix} \quad \text{divide (2)}\\
+    &= \begin{bmatrix}[cc|cc] 
+    1 & 0 & 1+\frac{x_1}{x_2 - x_1} & -\frac{x_1}{x_2 - x_1}\\ 
+    0 & 1 & -\frac{1}{x_2 - x_1} & \frac{1}{x_2 - x_1}
+    \end{bmatrix} \quad \text{(1) $\leftarrow$ (1) - $x_1$*(2)}\\
+    &= \begin{bmatrix}[cc|cc] 
+    1 & 0 & \frac{x_2}{x_2 - x_1} & -\frac{x_1}{x_2 - x_1}\\ 
+    0 & 1 & -\frac{1}{x_2 - x_1} & \frac{1}{x_2 - x_1}
+    \end{bmatrix}
+\end{align*}
+This gives us $\mathbf{X}^{-1} = \begin{bmatrix}
+    \frac{x_2}{x_2 - x_1} & -\frac{x_1}{x_2 - x_1}\\ 
+    -\frac{1}{x_2 - x_1} & \frac{1}{x_2 - x_1}
+    \end{bmatrix}$
+
+And so 
+\begin{align*}
+    \mathbf{w} &= \mathbf{X}^{-1} \mathbf{y} \\
+    &= \begin{bmatrix}
+    \frac{x_2}{x_2 - x_1} & -\frac{x_1}{x_2 - x_1}\\ 
+    -\frac{1}{x_2 - x_1} & \frac{1}{x_2 - x_1}
+    \end{bmatrix} \begin{bmatrix}  y_1 \\ y_2 \end{bmatrix} \\
+    &= \begin{bmatrix}
+    \frac{y_1x_2}{x_2 - x_1} -\frac{y_2x_1}{x_2 - x_1}\\ 
+    -\frac{y_1}{x_2 - x_1} + \frac{y_2}{x_2 - x_1}
+    \end{bmatrix} \\
+    &= \begin{bmatrix}
+    \frac{y_1x_2-y_2x_1}{x_2 - x_1}\\ 
+    \frac{y_2-y_1}{x_2 - x_1}
+    \end{bmatrix}
+\end{align*}
+
+As expected, using matrix notation gives the same result for $\mathbf{w}$ as solving the system one coefficient at a time. One advantage of using matrix notation is that the operations are vectorized: we can compute all of the coefficients simultaneously. This is much more efficient for large datasets.
+
+\medskip
+
+1.5 Yes, the analytical expression that we derived in (1.3) immediately applies to the case when our dataset consists of more than two points: our matrices and vectors will change size, but the algebraic operations will remain the same (assuming that the conditions for a unique solution to exist are met). This is assuming that the number of coefficients has also increased to match the number of data points you have: the $w$ vector needs to have the same length as the $y$ vector for a unique solution to exist.
+
+\newpage
+
 \begin{problem}[Optimizing Objectives - Calculus Review]
 In this class, we will write real-life goals we want our model to achieve into a mathematical expression and then find the optimal settings of the model that achieves these goals. The formal framework we will employ is that of mathematical optimization. Although the mathematics of optimization can be quite complex and deep, we have all encountered basic optimization problems in our first calculus class!\\
 
@@ -122,6 +242,36 @@ $$y = f(x_1, x_2) = \exp\left(-(x_1 - 2)^2 - (x_2 - 1)^2 \right)$$
 \end{enumerate}
 
 \end{problem}
+
+\newpage
+\question{2}{Optimizing Objectives - Calculus Review}
+2.1  The function governing the height of the Weeping Fig (namely $y = -3x^2+72x+70$) is concave: we see this because the highest degree of this polynomial is 2, and the coefficient in front is negative. With a highest degree of 2, this polynomial will have a single unique solution. This means that the height function will have a single global maximum.
+
+We also see this global maximum in the plot of the growth function below (I added a vertical line at 12 oz):
+
+\includegraphics[width=0.75\textwidth]{figures/hw0_plant_height.pdf}
+
+\medskip
+
+2.2 We want to determine whether the Weeping Fig plant will have a maximum height using calculus. We will check this by computing the first and second derivatives.
+
+First derivative tells us where the critical points are:
+$y' = -6x + 72 = 0 \Rightarrow x = 12$ oz.
+
+Second derivative tells us about the critical points:
+$y'' = -6$. Since the second derivative is always negative across the domain (regardless of the value of $x$), we see that the critical point at 12 oz of water represents a global maximum. This means that \textbf{Nari should give her Weeping Fig 12 oz of water each week} for maximal growth to a height of $-3*12^2+72*12+70 =$ \textbf{502 mm}.
+
+\medskip
+
+Now we're optimizing both water ($x_1$) and sunlight hours ($x_2$) and have this equation: $$y = f(x_1, x_2) = exp(-(x_1-2)^2 - (x_2-1)^2)$$
+
+\medskip
+
+2.3 From the 3D plot of plant height as a function of sunlight and water over the domain specified, it appears that there is a single unique global maximum (approximately near 1 oz and 2 hrs of sunlight).
+\includegraphics[width=0.75\textwidth]{figures/hw0_plant_height_multiD.pdf}
+
+
+\newpage
 
 \begin{problem}[Reasoning about Randomness - Probability and Statistics Review]
 In this class, one of our main focuses is to model the unexpected variations in real-life phenomena using the formalism of random variables. In this problem, we will use random variables to model how much time it takes an USPS package processing system to process packages that arrive in a day.\\
@@ -152,4 +302,70 @@ For this problem, you may find the \texttt{multivariate\_normal} module from \te
     \end{enumerate}
 \end{enumerate}
 \end{problem}
+
+\newpage
+\question{3}{Reasoning about Randomness - Probability and Statistics Review}
+
+3.1 (a) In the plot below, we visualize the bivariate gaussian distribution for the size $S$ and weight $W$ of packages, generated by sampling randomly 500 times from the MVN.
+
+\includegraphics[width=0.75\textwidth]{figures/hw0_joint_dist_hist.pdf}
+
+\medskip
+3.1 (b) With just visual inspection (not being overly precise), the bin in the histogram that appears to have the highest frequency is approximately $(S,W) = (119.5,  3.5)$. This corresponds pretty well with the theoretical expected size and weight of $(120, 4)$.
+
+\medskip
+
+3.2 Here we plot the package weight vs the PDF values at two fixed package sizes. By comparing the plots where $S=118$ and $S=122$, we see that the random variables $S$ and $W$ appear positively correlated: the larger the size, the larger the weight. This is also evident from the plot in 3.1(a).
+
+\includegraphics[width=0.75\textwidth]{figures/hw0_pdfvals.pdf}
+
+\medskip
+
+3.3 Using a Gaussian distribution to model the size and weight of packages is appropriate because it is a continuous distribution and packages are likely to show some central tendencies (the mean package weight and the mean size are meaningful measures to parameterize the distribution) and because these variables should be continuous. On the other hand, it may not be wholly appropriate because it seems plausible that multiple particular combinations of sizes and weights might be more likely: perhaps 12x24, 6x12, and 6x18 are very common package sizes. A Gaussian model of the size is only parameterized by a single mean and variance value. The same could be true of weight (e.g. each shipped product has the same weight, like a particular shoe model). Also, it's probably unlikely that the size and weight distributions will be symmetric: it should be more likely to have small/close to 0 than to have very large values. We also have physical constraints that are not obeyed by Gaussian distributions: we can't have negative weight or sizes.
+
+\medskip
+
+3.4 The processing time $T$ is a linear combination of the package size, weight, and some noise. 
+
+The expected value: 
+\begin{align*}
+    \mathbb{E}[T] &= \mathbb{E}[60+0.6W+0.2S+\epsilon] \\
+    &= 60 + 0.6\mathbb{E}[W]+0.2\mathbb{E}[S] + \mathbb{E}[\epsilon] &\quad \text{by linearity of expectation} \\
+    &= 60 + 0.6*4 + 0.2*120 + 0 &\quad \text{by props of MVN and N} \\
+    &= 86.4 \text{ seconds}
+\end{align*}
+
+The variance:
+\begin{align*}
+    \var(T) &= \var(60+0.6W+0.2S+\epsilon) = \var(0.6W+0.2S+\epsilon) \\
+    &= \var(0.6W) + \var(0.2S) + \var(\epsilon) + 2\cov(0.6W,0.2S) + 2\cov(0.6W, \epsilon) + 2\cov(0.2S, \epsilon) \quad \text{by props variance} \\
+    &= 0.36\var(W) + 0.04\var(S) +\var(\epsilon) + \\ &2*0.6*0.2\cov(W, S) + 2*0.6\cov(W, \epsilon) + 2*0.2\cov(S, \epsilon) \quad \text{by props (co)variance} \\
+    &= 0.36*1.5 + 0.04*1.5 + 5 + (2*0.6*0.2)*1 + 0 \quad \text{b/c $\epsilon$ is ind.} \\
+    &= 5.84 \text{ squared seconds}
+\end{align*}
+
+\medskip
+
+3.5 Here we work with the total amount of time it takes to process all packages received within a 24 hr period, calling this random variable $T^*$.
+
+(a) Here is a function to simulate draws from the distribution of $T^*$.
+\lstset{language=Python}
+\begin{lstlisting}
+def draw_from_tstar():
+    pkgs_per_each_hr = poisson.rvs(3, size=24)
+    tot_num_pkgs = np.sum(pkgs_per_each_hr)
+
+    ss_ws = mvn.rvs(mu, sigma, size=tot_num_pkgs)
+    eps = mvn.rvs(0,5,size=tot_num_pkgs)
+    
+    # T = 60+0.6W+0.2S+\epsilon
+    ts = 60 + 0.2*ss_ws[:,0] + 0.6*ss_ws[:,1] + eps
+    # t* = sum of processing times ts
+    tstar = np.sum(ts)
+    return tstar
+\end{lstlisting}
+
+\smallskip
+(b) Using that function to generate 1000 samples of $T^*$, we empirically estimate the mean and standard deviation as 6258 seconds and 698 seconds respectively.
+
 \end{document}

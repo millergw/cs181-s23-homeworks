@@ -23,6 +23,13 @@
 
 \usepackage[mmddyyyy,hhmmss]{datetime}
 
+% Gwen's useful commands (consider adding to a .sty file?)
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+
+
 \definecolor{verbgray}{gray}{0.9}
 
 \lstnewenvironment{csv}{
@@ -164,6 +171,33 @@ What is the time complexity of your implementation, when computing your model on
 
 \newpage
 
+\question{1}{Optimizing a Kernel}
+\part{1.1} We see that as $\tau$ increases, our model is penalized less for not perfectly fitting the available datapoints: when $\tau=1$, we see that the model perfectly intersects each datapoint but is jagged and discontinuous, at $\tau=50$, the interpolation between points is smoother and not all training points are intersected, and when $\tau=2500$, the model is skewed less by the variations in temperature overall. The model with $\tau=50$ is the model I would choose for predicting temperatures within our date range, because it smoothly interpolates between the datapoints while still capturing the changes in the temperature trends happening on the 1000-year scale.
+
+\includegraphics*[width=0.75\textwidth]{images/p1.2.png}
+
+
+\part{1.2} It's a bad idea to set the value of $\tau$ such that the MSE for the training set is minimized; this is a sure-fire way to overfit to the training dataset and end up with a model that hasn't actually learned anything useful more generally! The model would just learn to set $tau$ to a very small number, which whould result in a train MSE approaching 0.
+
+\part{1.3} Here we write the form of the MSE of $f_\tau$ over the test set as a function of the training set and test set:
+\begin{align*}
+  MSE_{test} &= \frac{1}{M}\sum_{i=1}^M \left(y'_i - f_\tau(x'_i)\right)^2 \\
+  &= \frac{1}{M}\sum_{i=1}^M \left(y'_i - \frac{\sum_{j=1}^N K_\tau(x_j, x'_i)y_j}{\sum_{j=1}^N K_\tau(x_j, x'_i)}\right)^2
+\end{align*}
+
+\part{1.4} When we consider the test dataset, we see that choosing $\tau=50$ yields the smallest MSE (see the table below) and thus we will choose this model. This is the same model that I chose in part 1.1.
+
+\begin{table}[hbt!]
+  \begin{tabular}{llll}
+  $\tau$   & 1     & 50    & 2500  \\ \hline
+  test MSE & 1.947 & 1.858 & 8.334 \\ \hline
+  \end{tabular}
+  \end{table}
+
+\part{1.5} For someone to be able to make predictions with the kernelized regressor, they will need all of the training datapoints in addition to the value of $\tau$, namely $\{(x_n, y_n)\}_{n = 1} ^N$. The storage space requirements will scale as $O(N)$, aka linearly. The time complexity of making a single prediction will scale as $O(N)$ because we need to sum across all the $N$ training datapoints in both the numerator and denominator.
+
+\newpage
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Problem 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -210,6 +244,25 @@ What is the time complexity of your implementation, when computing your model on
 \end{enumerate}
 
 \end{problem}
+
+\newpage
+
+\question{2}{Kernels and kNN}
+
+\part{2.1} \includegraphics*[width=0.8\textwidth]{images/p2.1.png}
+
+\part{2.2} In these plots, we see that the more neighbors used for generating the prediction, the less the prediction is pulled by ``outlying" points. We see that for small $k$, the model predictions hew more closely to the local training data points whereas as $k$ approaches the size of the training dataset, we start predicting close to the training temperature average across the whole domain.
+
+
+We see that generally speaking, increased size of $\tau$ in the kernelized regression produces results similar to those seen when increasing the number of neighbors $k$ in the kNN regression. Also, $\tau=1$ looks remarkably similar to $k=1$ and shows nearly identical (discontinuous) interpolation. 
+
+\part{2.3} Of the $k$-values assessed here, my favorite is $k=3$ because it visually doesn't overfit as much as $k=1$ while also capturing some of the variation across the domain (as opposed to $k=N-1$). The test MSE is approximately 3.89.
+
+\part{2.4} For my friend to be able to reproduce the same predictions as me, I will tell them the $k$ I selected and the similarity kernel I was using (or I could just give them the function). In addition, in the special case when I know which years they which to make the prediction for, then I just need to provide the $k$ nearest points which scales as $O(1)$ as a function of the training set size. However, if I don't know which years they want to predict over, then I will still need to provide the whole training dataset which would \textbf{scale as $O(N)$}. This is the space complexity of storing our model.
+
+In terms of time complexity, the way I chose to implement isn't the most efficient because for each test point I chose to sort the array of kernel similarities and slice to find the $k$ largest values (so this step was $O(NlogN)$ instead of $O(N)$ which we could get if we stored the $k$ largest values as we looped through). In total, \textbf{the time complexity of computing a single prediction be $O(NlogN)$ as I implemented it.}
+
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Problem 3
@@ -274,7 +327,7 @@ For each basis create a plot of your code graphing the OLS
 regression line trained on your training data against a 
 scatter plot of the training data. Boilerplate plotting code
 is provided in the notebook. \textbf{All you need to include 
-in your writeup for 4.1 are these four plots.}
+in your writeup for 3.1 are these four plots.}
 \vspace{1em}
 \end{enumerate}
 \end{problem}
@@ -335,6 +388,40 @@ of the target $\mathbf{y}$ to be different; in these cases the
 MSE can no longer be directly compared.
 
 \end{framed}
+
+\newpage
+\question{3}{Modeling Climate Change 800,000 Years Ago}
+\part{3.1}
+
+\includegraphics*[width=\textwidth]{images/p3.1.png}
+
+\part{3.2} We want to minimze the MSE and the negative log-likelihood w.r.t. the test dataset across our models (keeping common sense in mind, too). Both of these metrics are smallest when choosing basis (c): here, the training metrics are also relatively similar to the training metrics. This is especially evident when using the negative log-likelihood as our evaluation metric. NOTE: My second choice would be model (a) because it visuallt appears to capture most of the temperature trends on the scale of 1000s of years, but both its test and train MSE are significantly larger than that of basic (c).
+
+Basis (d) shows evidence of overfitting because the metrics for the training dataset are much smaller than those for the test dataset. Bases (a) and (b) aren't too bad, but show some evidence of underfitting: the evaluation metrics are relatively large for both the training and testing datasets (the relatively large values for the training dataset compared to basis (c) are the classic warning sign of underfitting). 
+
+% Please add the following required packages to your document preamble:
+\begin{table}[hbt!]
+  \begin{tabular}{lllll}
+  \hline
+  part      & a       & b       & c       & d       \\ \hline
+  train MSE & 4.83    & 5.53    & 2.88    & 0.64    \\
+  test MSE  & 7.96    & 8.71    & 5.97    & 58.91   \\
+  train NLL & 127.522 & 130.364 & 119.590 & 110.502 \\
+  test NLL  & 61.508  & 62.842  & 57.956  & 152.336 \\ \hline
+  \end{tabular}
+\end{table}
+
+\part{3.3} The beauty of basis functions is how well it condenses the model while maintaining good performance: for my friend to use my basis model, all she needs is my $D$-dimensional weight vector and my basis function and scaling function so she can transform her data into the appropriate basis. She doesn't need access to the training data at all.
+
+The space complexity of story this model is constant, $O(1)$:  no matter how much data we use to train our model, it remains the same size.
+
+Given an arbitrary datapoint, the time complexity to compute the predicted value using our basis regression is $O(1)$: all we need to do is generate the basis for the point (linear operation), multiply this with our known weights (also linear in time), and sum together.
+
+Our basis regressor uses less time and space than either of our previous methods (the kNN regressor or the kernelized regressor) -- you can't do better than constant-time and constant-space algorithms!
+
+
+\newpage
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Problem 4
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -367,15 +454,41 @@ This question is a conceptual question, and you are not required to implement th
 \end{problem}
 
 \newpage
+\question{4}{Impact Question}
+
+\begin{enumerate}
+
+  \item \textbf{Target variable:} What target variable would you choose and what would be its unit? 
+  \subitem We will try to predict the net energy consumption of the USA in kilowatt-hours (kWh).
+  \item \textbf{Features:}  List 5 possible features and explain your assumption why you think they might impact the target variable. 
+    \subitem Features to include: \textbf{month (or quarter)} (hot and cold months might see higher heating/coolding needs), population (more people likely to increase net consumption), \textbf{median US income} (increased income might be associated with higher consumption of items that require manufacturing), \textbf{cars per capita} (more cars per person means likely more fuel required), \textbf{average car MPG} (lower MPG results in more energy required per unit distance), \textbf{spending on public transport per capita} (public transport generally more efficient at moving people than car-centric transport).
+  \item \textbf{Dataset size:} What should be the size of your dataset / covered time period? Why? 
+    \subitem We will cover at least the past 30 years because we want to help the president understand the trends of the data, and because we also want to have enough data to average over random year-to-year fluctuations (and month-to-month fluctuations, since energy consumption likely systemically changes with the weather and consumer demands). Ideally, we will have monthly datapoints for all of our features but it is possible that we would only have access to quarterly reports.
+  \item \textbf{Performance metric:} What metric would you use to assess the model’s performance? 
+    \subitem To assess the performance, I will use MSE on a held-out test set (e.g. either a random 80:20 train:test split or a temporal 80:20 train:test split). I will also generate bootstrap training datasets to assess the uncertainty in the weights of our linear model, which will help the president with interpretation.
+  \item \textbf{Policy decision:} Explain one policy decision the US president could make based on your model. 
+    \subitem From the coefficients (and their associated uncertainties), the US president will be able to identify which areas of the economy/country are consuming the most (and thus areas where reducing consumption by 5%, for example, will have a larger impact). Also, if any coefficients have high uncertainty, this might signal that we need better information in this area (or more data) before making decisions.
+  \item \textbf{Trust:} What could be barriers for the US president to trust your model?  List two possible barriers. 
+    \subitem The model may not achieve high test set performance, and thus may not be very useful. If the uncertainty in our coefficients is high, then the president may not trust that the model's implications are stable. Also, the model is relatively simple and may be missing features or interactive effects that could significantly change the `best' policy decisions: this could make the president hesitant to use the model at all.
+  \item \textbf{Risk:} What happens if your model is wrong/inaccurate?  List one real-world consequence. 
+    \subitem If our model is wrong or inaccurate, then the US could potentially waste enormous resources trying ineffectually to reduce energy consumption via policies doomed to fail. This wastes time, wastes money, and could also reduce the trust that the public has in the policymakers and potentially even the scientists who proposed the model (aka me).
+  
+  \end{enumerate}
+\newpage
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Name and Calibration
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection*{Name}
+\subsection*{Name} Gwen Miller
 
 \subsection*{Collaborators and Resources}
 Whom did you work with, and did you use any resources beyond cs181-textbook and your notes?
 
+I didn't work with anyone or use outside resources, except in debugging my kNN code where I looked up how to find the indexes of the k-smallest/largest values in a list (https://stackoverflow.com/questions/34226400/find-the-index-of-the-k-smallest-values-of-a-numpy-array).
+
 \subsection*{Calibration}
 Approximately how long did this homework take you to complete (in hours)? 
+
+8 hr. Mostly for checking my work and expanding on my written answers.
 
 \end{document}
