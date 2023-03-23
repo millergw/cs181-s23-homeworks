@@ -14,6 +14,17 @@
 \usepackage{color}
 \usepackage{listings}
 \usepackage{enumitem}
+\usepackage[italicdiff]{physics}
+\newcommand{\Beta}{\text{Beta}}
+\newcommand{\Unif}{\text{Unif}}
+\newcommand{\Var}{\text{Var}}
+
+
+% Gwen's useful commands (consider adding to a .sty file?)
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
 
 \DeclareMathOperator*{\mean}{\mathbb{E}}
 
@@ -58,9 +69,9 @@ As always, please start early and ask questions on Ed!
 Please type your solutions after the corresponding problems using this
 \LaTeX\ template, and start each problem on a new page.
 
-Please submit the \textbf{writeup PDF to the Gradescope assignment `HW2'}. Remember to assign pages for each question.  \textbf{You must include your plots in your writeup PDF. } The supplemental files will only be checked in special cases, e.g. honor code issues, etc.
+Please submit the \textbf{writeup PDF to the Gradescope assignment `HW3'}. Remember to assign pages for each question.  \textbf{You must include your plots in your writeup PDF. } The supplemental files will only be checked in special cases, e.g. honor code issues, etc.
 
-Please submit your \textbf{\LaTeX\ file and code files to the Gradescope assignment `HW2 - Supplemental'}. \\
+Please submit your \textbf{\LaTeX\ file and code files to the Gradescope assignment `HW3 - Supplemental'}. \\
 
 
 \newpage
@@ -205,7 +216,95 @@ Please submit your \textbf{\LaTeX\ file and code files to the Gradescope assignm
 
 \end{framed}
 
+\newpage
 \subsection*{Solution:}
+\question{1.1}{Frequentist paradigm and MLE.} 
+Deriving the MLE for a Binomial is very similar to finding the MLE for the Bernoulli (since the two are very related):
+
+\begin{align*}
+  log p(Y=y | \theta) &\propto ylog(\theta) + (N-y)log(1-\theta) \\
+  \frac{d}{d\theta}log p(Y=y | \theta) &\propto \frac{y}{\theta} - \frac{N-y}{1-\theta} = 0 \\
+  \Rightarrow \hat{\theta}_{MLE} &= \frac{y}{N}
+\end{align*}
+
+TODO: do I need to check the second derivative to show that the function is convex?
+
+\question{1.2}{Beta-binomial conjugacy.} 
+TODO
+
+\part{a(i)} From the story of the beta distribution (STAT110), we know that the parameters can be interpreted as the number of successes and the number of failures. Thus, we see that the mean (aka the average number of successes) a $\Beta(\alpha, \beta)$ is $\frac{\alpha}{\alpha+\beta}$.
+
+\part{a(ii)} We compute, when $\alpha>1, \beta>1$:
+\begin{align*}
+  \frac{d}{d\theta} p(\theta) &= (\alpha-1) \theta^{\alpha-2} (1-\theta)^{\beta-1} - \theta^{\alpha-1} (\beta-1)(1-\theta)^{\beta-2}=0 \quad \text{by product rule}\\
+  &= \theta^{\alpha-2} (1-\theta)^{\beta-2} \left((\alpha-1)(1-\theta) - \theta(\beta-1)\right) \\
+  \Rightarrow \text{arg max}_{\theta} p(\theta) &= (\alpha-1)(1-\theta) - \theta(\beta-1) = \alpha-1+\alpha - \alpha\theta - \theta\beta + \theta \\
+  &= \theta(-\alpha+1-\beta+1) + (\alpha-1) \\
+  \Rightarrow \hat{\theta}_{MLE} &= \frac{\alpha-1}{\alpha+\beta-2}
+\end{align*}
+
+If $\alpha<1$ or $\beta<1$ then the distribution is convex so there isn't a unique or finite mode; the PDF goes to infinity as $\theta \rightarrow 0$ and $\theta \rightarrow 1$. TODO: add?
+
+TODO: do I need to check the second derivative to show that the function is convex?
+
+\part{a(iii)} We compute the variance as follows: TODO: why do I find variance particularly difficult? It's always the $\mean[\theta^2]$ bit that I find difficult.
+
+TODO: do the derivation
+\begin{align*}
+  \Var(\theta) &= \mean[\theta^2] - (\mean[\theta])^2 \quad \text{by def var} \\
+  &= \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta-1)}
+\end{align*}
+
+
+
+\part{a cont'd} The distribution $\Beta(1,1) = \Unif(0,1)$, because when $\alpha=\beta=1$ the PDF becomes constant (no dependence on $\theta$). The beta distribution is remarkably flexible depending on the setting of its two hyperparameters. TODO: add?
+
+\part{b} Here we show that the posterior is a $\Beta(\alpha+y, \beta+N-y)$:
+
+\begin{align*}
+  p(\theta|Y) &\propto \theta^y(1-\theta)^{N-y} \theta^{\alpha-1}(1-\theta)^{\beta-1} \\
+  &= \theta^{y+\alpha-1}(1-\theta)^{\beta+N-y-1}
+\end{align*}
+
+Since the support for $\theta$ is $[0,1]$, we see that this matches the PDF for a Beta distribution where the update rule is $\alpha_N = \alpha+y$ and $\beta_N = \beta+N-y$.
+
+\question{1.3}{Posterior mean and mode.} 
+TODO
+
+\part{a} Advantages: point estimates are easy to interpret, and are a single number. This can make them easy to work with, too.
+
+Disadvantages: when we summarize a posterior distribution with a point estimate, we lose tons of information. Using a distribution instead of a single number lets us account for uncertainties and the randomness inherent to the process.
+
+\part{b}
+
+\begin{align*}
+  \theta_{\text{post mean}} = \mean[\theta|Y=y] &= \frac{\alpha+y}{\alpha+\beta+N} \\
+  \theta_{\text{MAP}} = \text{arg max}_{\theta} p(\theta|Y=y) &= \frac{\alpha_N-1}{\alpha_N+\beta_N-2} = \frac{\alpha+y-1}{\alpha+\beta+N-2} \\
+  \Var(\theta|Y=y) &= \frac{\alpha_N\beta_N}{(\alpha_N+\beta_N)^2(\alpha_N+\beta_N-1)} = \frac{(\alpha+y)(\beta+N-y)}{(\alpha+\beta+N)^2(\alpha+\beta+N-1)}
+\end{align*}
+
+\question{1.4}{Prior-posterior connections.} 
+TODO
+
+\part{a} The larger $\alpha$ is, the stronger our prior belief is that 1 occurs more than 0, so our MAP moves towards 1. On the other hand, as $\beta \to \infty$, $\theta_{MAP} \to 0$. To reflect a prior belief that the coin is fair, then we can set $\alpha=\beta>1$. TODO: why do I need to be careful of 2.a.ii?
+
+\part{b.i} The variance of the prior is larger than the variance of the posterior, because we are adding data. TODO: how to show computationally?
+
+\part{b.ii} To encode a weaker belief, we can choose parameters of $\alpha, \beta$ to make the prior variance larger. This basically shows that we are less certain in our belief.
+
+\part{b.iii} As $N\to\infty$, the posterior variance goes to 0 because we have a $N^3$ term in the bottom and a $N$ in the numerator. This makes sense, because if we had infinite data we expect our variance to shrink to 0.
+
+
+\question{1.5}{Analysis and connection to frequentism.} 
+TODO: OH.
+
+\part{a} We write a loss function s.t. minimizing $\ell$ is equivalent to calculating the MAP estimate. Specifically, we write:
+
+\begin{align*}
+  \ell(\theta|y, n, \alpha, \beta) = TODO.
+\end{align*}
+
+\part{b} As $N \to \infty$, the posterior mean and the MAP both go to the MLE, which is $\frac{y}{N}$. This occurs because the constant terms (e.g. $\alpha, \beta$) will drop out. This makes sense, because if we have infinite data then the prior shouldn't affect the outcome at all.
 
 \newpage
 
@@ -331,9 +430,91 @@ Please submit your \textbf{\LaTeX\ file and code files to the Gradescope assignm
     \end{enumerate}  
 \end{framed}
 
+\newpage
 \subsection*{Solution:}
 
+\question{2.1} 
 
+Assuming the normal convention where $\vec{x}$ has shape Mx1 (column vector), then we have:
+\begin{itemize}
+  \item Shape of $\vec{a}_1, \vec{b}_1, \vec{z}_1$: Hx1
+  \item Shape of $\mathbf{W_1}$: HxM
+  \item Shape of $\mathbf{W_2}$: 1xH
+  \item Shape of $a_2, b_2, z_2, \hat{y}$: 1x1 (scalar)
+\end{itemize}
+
+\question{2.2} 
+
+\part{a}
+
+\begin{align*}
+  \pdv{L}{b_2} &= \pdv{L}{\hat{y}}\cdot\pdv{\hat{y}}{z_2}\cdot\pdv{z_2}{a_2}\cdot\pdv{a_2}{b_2} \\ 
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot 1 \cdot \sigma(a_2)(1-\sigma(a_2))\cdot 1 \\
+  &=\left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2))
+\end{align*}
+
+\part{b}
+
+\begin{align*}
+  \pdv{L}{W_2^h} &= \pdv{L}{\hat{y}}\cdot\pdv{\hat{y}}{z_2}\cdot\pdv{z_2}{a_2}\cdot\pdv{a_2}{W_2^h} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot\pdv{a_2}{W_2^h} \quad \text{from part (a)} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot z_1^h \quad \text{bc only the $h$th comp of $z_1$ contributes}
+\end{align*}
+
+\part{c}
+
+TODO: ask in OH/EdStem about things like the $\pdv{a_2}{z_1^h}$ terms. How should we write things like this out?
+
+\begin{align*}
+  \pdv{L}{W_2^h} &= \pdv{L}{\hat{y}}\cdot\pdv{\hat{y}}{z_2}\cdot\pdv{z_2}{a_2}\cdot\pdv{a_2}{z_1^h}\cdot\pdv{z_1^h}{a_1^h}\cdot\pdv{a_1^h}{b_1^h} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot\pdv{a_2}{z_1^h}\cdot\pdv{z_1^h}{a_1^h}\cdot\pdv{a_1^h}{b_1^h} \quad \text{from part (a)} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot \left(W_2^T\right)^h \cdot \sigma(a_1^h)(1-\sigma(a_1^h)) \cdot 1 \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot \left(W_2^T\right)^h \cdot \sigma(a_1^h)(1-\sigma(a_1^h))
+\end{align*}
+where anything $c^h$ means the $h$-th element of the vector $c$.
+
+\part{d}
+
+\begin{align*}
+  \pdv{L}{W_1^{h,m}} &= \pdv{L}{\hat{y}}\cdot\pdv{\hat{y}}{z_2}\cdot\pdv{z_2}{a_2}\cdot\pdv{a_2}{z_1^h}\cdot\pdv{z_1^h}{a_1^h}\cdot\pdv{a_1^h}{W_1^{h,m}} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot \left(W_2^T\right)^h \cdot \sigma(a_1^h)(1-\sigma(a_1^h)) \cdot \pdv{a_1^h}{W_1^{h,m}} \quad \text{from part of (c)'s calculations} \\
+  &= \left(-\frac{y}{\hat{y}}-\frac{1-y}{1-\hat{y}} \right)\cdot \sigma(a_2)(1-\sigma(a_2)) \cdot \left(W_2^T\right)^h \cdot \sigma(a_1^h)(1-\sigma(a_1^h)) \cdot x^m
+\end{align*}
+where anything $c^h$ means the $h$-th element of the vector $c$ and $x^m$ is the $m$-th element of the $x$ vector.
+
+\question{2.3}{Forward-mode auto-differentiation example} 
+TODO
+\part{a} Letting $x_1=\pi/6, \quad x_2=1$, we calculate the intermediate values:
+
+\begin{align*}
+  v_1 &= \frac{\pi}{6} \\
+  v_2 &= \sin(\pi/6) = 0.5 \\
+  v_3 &= \ln(1/2) = -\ln(2) \approx -0.693\\
+  v_4 &= 1 \\
+  v_5 &= e^1 = e \\
+  v_6 &= x1\cdot e = \frac{\pi}{6}e \approx 1.423 \\
+  v_7 &= v_3+v_6 = -\ln(2) + \frac{\pi}{6}e \approx 0.730
+\end{align*}
+
+\part{b} We calculate all the derivatives of intermediate variables evaluated at $x_1=\pi/6, \quad x_2=1$:
+
+TODO: OH/Edstem. Ask: do I need to use partial derivatives for $v_6$ and $v_7$?
+
+\begin{align*}
+  \dv{v_1}{x_1} &= 1 &= 1\\
+  \dv{v_2}{v_1} &= \cos(v_1) &= \cos(\frac{\pi}{6}) = \frac{\sqrt{3}}{2} \approx 0.866\\
+  \dv{v_3}{v_2} &= \frac{1}{v_2} &= 2\\
+  \dv{v_4}{x_2} &= 1 &= 1\\
+  \dv{v_5}{v_4} &= \exp{v_4} &= 1 \\
+  \pdv{v_6}{v_1} &= v_5 &= e\\
+  \pdv{v_6}{v_5} &= v_1 &= \frac{\pi}{6} \\
+  \pdv{v_7}{v_3} &= 1 &= 1 \\
+  \pdv{v_7}{v_6} &= 1 &= 1 \\
+  \dv{f(x_1, x_2)}{v_7} &= 1  &= 1 
+\end{align*}
+
+\question{2.4}{Extra credit.} 
+TODO
 
 \newpage
 
@@ -363,6 +544,16 @@ In this problem, you will learn how to use PyTorch. This machine learning librar
 
 
 \subsection*{Solution:}
+
+
+\question{3.1} 
+TODO
+
+\question{3.2} 
+TODO
+
+\question{3.3} 
+TODO
 
 Plot:
 
@@ -515,6 +706,35 @@ words in total). Bullet points are appropriate.
 
 \subsection*{Solution:}
 
+\question{4.1}{Adversarial thinking.} 
+
+TODO
+
+\part{a} An example of a hardware adversarial attack would be spraying paint or otherwise covering the camera of the self-driving car, or by placing tape over stop signs to make them look rectangular and to remove the word ``STOP." Making the camera unable to function (especially if done after the car was already in motion) would make the car unable to follow the rules of the road and avoid objects like cars or people. Physically making the stop sign unrecognizable would also likely lead to a crash from the autonomous vehicle hitting another car at a 4-way stop, because the rectangular stop sign would be pretty OOD compared to the input data used to train the model.
+
+\part{b} An example of a software adversarial attack (assuming we nefariously gain access to the model prior to deployment) would be to  (TODO: what is this?) 
+
+Another idea would be painting new lane markings that would lead the autopiloted car into oncoming traffic.
+
+\part{c} An example of a social engineering attack could be if images/video used to train the neural network were purposefully polluted with mislabeled data or incorrect ``appropriate actions" (e.g. making red mean go and green mean stop at a stoplight).
+
+\question{4.2}{Safeguards.} 
+TODO
+
+To protect against someone physically disabling the camera, Tesla could make the autopilot feature automatically turn off if any of its sensors are below some threshold of `optimum' (e.g. 95\%). This would allow for specs of dirt but not for disabling issues.
+
+To protect against issues like weirdly made-up stop signs or paint on the road, the NN needs to be trained to recognize odd/abnormal markings. This would involve augmenting the training dataset to include such issues as construction, adversarial actors changing road signs, etc.
+
+To protect against mislabeled or otherwise inappropriate data, the engineers need to actually examine the training dataset images. This is especially important for classification or ID tasks that involve high-risk or high-impact decisions (e.g. it's less important to know the meaning of one obscure sign than it is to identify when a human or car is within striking distance).
+
+\question{4.3}{Policy recommendation.} 
+TODO
+
+\part{a}
+
+\part{b}
+
+\part{c}
 
 \newpage
 
